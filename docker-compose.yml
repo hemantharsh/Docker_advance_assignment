@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  python-container1:
+    image: people:multistage
+    container_name: python-container1
+    networks:
+      - my_custom_network
+    restart: unless-stopped
+
+  python-container2:
+    image: people:multistage
+    container_name: python-container2
+    networks:
+      - my_custom_network
+    restart: unless-stopped
+
+networks:
+  my_custom_network:
+    driver: bridge
