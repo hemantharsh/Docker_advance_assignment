@@ -1,0 +1,47 @@
+# Stage 1: Build Python
+FROM alpine:3.19 AS build-stage
+
+ENV PYTHON_VERSION=3.11.10
+
+RUN set -eux; \
+    apk add --no-cache --virtual .build-deps \
+        gnupg \
+        tar \
+        xz \
+        gcc \
+        libc-dev \
+        make \
+        openssl-dev \
+        zlib-dev \
+        bzip2-dev \
+        readline-dev \
+        sqlite-dev \
+        build-base; \
+    wget -O python.tar.xz "https://www.python.org/ftp/python/${PYTHON_VERSION%%[a-z]*}/Python-$PYTHON_VERSION.tar.xz"; \
+    tar -xvf python.tar.xz; \
+    cd Python-$PYTHON_VERSION; \
+    ./configure --prefix=/usr --enable-optimizations --with-lto; \
+    make -j"$(nproc)"; \
+    make install; \
+    cd ..; \
+    rm -rf Python-$PYTHON_VERSION python.tar.xz; \
+    apk del .build-deps
+
+# Add a non-root user
+RUN adduser -D myuser
+
+# Stage 2: Final Image with Python Installed
+FROM alpine:3.19
+
+# Add a non-root user
+RUN adduser -D myuser
+
+# Switch to non-root user
+USER myuser
+
+# Copy Python from build-stage
+COPY --from=build-stage /usr/local /usr/local
+
+# Define the default command or entrypoint if needed
+# CMD ["your_command"]
+CMD ["sleep", "3600"]
